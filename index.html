@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Fuzzy String Comparision</title>
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative; /* Added for positioning result icons */
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="range"],
+        button {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #007bff; /* Adjust color as needed */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto; /* Center the loader horizontally */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #resultIcon {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+        }
+        #resultIcon .fas {
+            margin-right: 5px;
+        }
+        #resultIcon .fas.fa-check {
+            color: #28a745;
+        }
+        #resultIcon .fas.fa-times {
+            color: #dc3545;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Fuzzy String Comparision</h1>
+            <label for="word1">Word 1:</label>
+            <input type="text" id="word1" placeholder="Enter word 1" required>
+            <label for="word2">Word 2:</label>
+            <input type="text" id="word2" placeholder="Enter word 2">
+            <label for="threshold">Threshold:</label>
+            <input type="range" id="threshold" min="0" max="1" step="0.01"
+                value="0.5">
+            <input type="text" id="thresholdValue" readonly>
+            <button onclick="callAPI()" id="callBtn">Compare</button>
+            <div id="loader"></div>
+            <div id="response"></div>
+            <div id="resultIcon"></div>
+        </div>
+
+        <script>
+        function updateSliderValue() {
+            var slider = document.getElementById('threshold');
+            var sliderValueDisplay = document.getElementById('thresholdValue');
+            sliderValueDisplay.value = slider.value;
+        }
+
+        function callAPI() {
+            var word1 = document.getElementById('word1').value;
+            var word2 = document.getElementById('word2').value;
+            var threshold = document.getElementById('threshold').value;
+            var btn = document.getElementById('callBtn');
+            btn.innerHTML = 'Loading...';
+            var apiUrl = 'http://127.0.0.1:8000/strcmp/' + threshold + '/' + word1 + '_' + word2;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', apiUrl, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    document.getElementById('loader').style.display = 'none';
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        document.getElementById('response').innerText = JSON.stringify(response, null, 2);
+                        showResultIcon(response.similar);
+                    } else {
+                        document.getElementById('response').innerText = 'Error: ' + xhr.status;
+                    }
+                    document.getElementById('callBtn').disabled = false;
+                } else {
+                    document.getElementById('loader').style.display = 'block';
+                    document.getElementById('response').innerText = '';
+                    document.getElementById('callBtn').disabled = true;
+                }
+                btn.innerHTML = 'Compare';
+            };
+            xhr.send();
+        }
+
+        function showResultIcon(similar) {
+            var resultIcon = document.getElementById('resultIcon');
+            resultIcon.innerHTML = '';
+            var icon = document.createElement('i');
+            if (similar) {
+                icon.classList.add('fas', 'fa-check');
+            } else {
+                icon.classList.add('fas', 'fa-times');
+            }
+            resultIcon.appendChild(icon);
+        }
+
+        document.getElementById('threshold').addEventListener('input', updateSliderValue);
+        updateSliderValue(); // Initial update
+    </script>
+        <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    </body>
+</html>
